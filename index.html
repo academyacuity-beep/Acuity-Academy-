@@ -119,8 +119,10 @@ function bindInt(id){var b=document.getElementById("int");if(!b)return;if(mine(i
   fetch(API+"hit/"+ikey(id)).then(function(r){if(!r.ok)throw 0;b.textContent="\u2713 Interest recorded";n.textContent="Thank you! We will announce here when this course opens."}).catch(function(){clearMine(id);b.disabled=false;n.textContent="Could not record. Check your connection and tap again."})}}
 function counts(){var h='<div class="w"><h2>Interest counts</h2><p class="sub">Reload this page to refresh.</p>';
  CATS.forEach(function(k){k.c.forEach(function(c){h+='<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 style="margin:0">'+c[1]+'</h3><b id="ct-'+c[0]+'" style="font:800 28px Fraunces,serif;color:var(--ac)">…</b></div>'})});return h+'</div>'}
-function loadCounts(){CATS.forEach(function(k){k.c.forEach(function(c){var el=document.getElementById("ct-"+c[0]);
- fetch(API+"get/"+ikey(c[0])).then(function(r){return r.ok?r.json():{value:0}}).then(function(d){el.textContent=d.value||0}).catch(function(){el.textContent="?"})})})}
+function loadCounts(){var list=[];CATS.forEach(function(k){k.c.forEach(function(c){list.push(c[0])})});
+ (function next(i){if(i>=list.length)return;var id=list[i],el=document.getElementById("ct-"+id);
+  function go(t){fetch(API+"get/"+ikey(id)).then(function(r){return r.ok?r.json():{value:0}}).then(function(d){el.textContent=d.value||0;setTimeout(function(){next(i+1)},350)}).catch(function(){if(t<2)setTimeout(function(){go(t+1)},1200);else{el.textContent="?";setTimeout(function(){next(i+1)},350)}})}
+  go(0)})(0)}
 function route(){var h=(location.hash||"#home").slice(1),k=h.split("-"),v=k[0],a=k.slice(1).join("-"),html;
  if(v==="courses")html=courses();else if(v==="cat")html=cat(a);else if(v==="course")html=course(a);else if(v==="enrol"){if(window._last!==a){st.step=1;window._last=a}html=enrol(a)}else if(v==="about")html=about();else if(v==="counts"&&a===ADMIN)html=counts();else html=home();
  app.innerHTML=html;scrollTo(0,0);
