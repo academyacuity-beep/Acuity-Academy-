@@ -110,12 +110,11 @@ function enrol(id){var f=find(id);if(!f||!OPEN[id])return courses();var c=f.c,o=
  return b+'</div>'}
 function about(){return'<div class="w"><h2>About Acuity Academy</h2><p>Acuity Academy offers live, interactive surgical teaching on Zoom for medical students, house officers and surgical residents. Teaching is delivered live and adapts to each group. We also offer a short introduction to the OET.</p><div class="card"><h3>Two ways to learn</h3><p>👥 Group course: small live cohorts.<br>🎯 Individual tutoring: one-to-one, at your pace.</p></div><a class="btn w100" target="_blank" href="'+wa("Hello, I have a question about Acuity Academy")+'">Contact on WhatsApp</a></div>'}
 var API="https://countapi.mileshilliard.com/api/v1/",ADMIN="ac9x4";
-function ikey(id){return"acuity-sd-int-"+id}
+function ikey(id){return"acuity-sd-v2-int-"+id}
 function mine(id){try{return localStorage.getItem(ikey(id))==="1"}catch(e){return false}}
 function setMine(id){try{localStorage.setItem(ikey(id),"1")}catch(e){}}
-function bindInt(id){var b=document.getElementById("int");if(!b)return;if(mine(id))b.disabled=true;
- b.onclick=function(){if(mine(id))return;b.disabled=true;
-  fetch(API+"hit/"+ikey(id)).then(function(r){if(!r.ok)throw 0;setMine(id);b.textContent="\u2713 Interest recorded";document.getElementById("intn").textContent="Thank you! We will announce here when this course opens."}).catch(function(){b.disabled=false;document.getElementById("intn").textContent="Could not record. Check your connection and try again."})}}
+function bindInt(id){var b=document.getElementById("int");if(!b)return;if(mine(id)){b.disabled=true;return}
+ b.onclick=function(){if(mine(id))return;b.disabled=true;setMine(id);b.textContent="\u2713 Interest recorded";document.getElementById("intn").textContent="Thank you! We will announce here when this course opens.";fetch(API+"hit/"+ikey(id)).catch(function(){})}}
 function counts(){var h='<div class="w"><h2>Interest counts</h2><p class="sub">Reload this page to refresh.</p>';
  CATS.forEach(function(k){k.c.forEach(function(c){h+='<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 style="margin:0">'+c[1]+'</h3><b id="ct-'+c[0]+'" style="font:800 28px Fraunces,serif;color:var(--ac)">…</b></div>'})});return h+'</div>'}
 function loadCounts(){CATS.forEach(function(k){k.c.forEach(function(c){var el=document.getElementById("ct-"+c[0]);
