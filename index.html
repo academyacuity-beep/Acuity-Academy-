@@ -46,6 +46,9 @@ input,select,textarea{width:100%;padding:13px;border-radius:12px;border:1.5px so
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));z-index:20}
 nav a{flex:1;text-align:center;font-size:12px;font-weight:600;color:var(--mut);text-decoration:none}
 nav a span{display:block;font-size:20px}nav a.on{color:var(--ac)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:none}
+.chip{white-space:nowrap;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);border-radius:999px;padding:8px 14px;font:600 14px Inter,sans-serif;text-decoration:none}
+.chip.on{background:var(--ac);color:var(--bt);border-color:var(--ac)}
 </style>
 </head>
 <body>
@@ -89,13 +92,16 @@ var app=document.getElementById("app");
 function find(id){for(var i=0;i<CATS.length;i++)for(var j=0;j<CATS[i].c.length;j++)if(CATS[i].c[j][0]===id)return{cat:CATS[i],c:CATS[i].c[j]}}
 function wa(msg){return"https://wa.me/"+WA+"?text="+encodeURIComponent(msg)}
 function status(id){return OPEN[id]?'<span class="tag">Open for registration</span>':'<span class="tag soon">Register your interest</span>'}
-function home(){return'<section class="hero"><div class="w"><span class="pill"><span class="dot"></span> LIVE ON ZOOM</span><h1>Train sharper.<br>Think like a <em>clinician.</em></h1><p>Surgical teaching for medical students, house officers and residents. Small groups or one-to-one.</p><a class="btn" href="#courses">Browse courses</a><a class="btn ghost" href="#about">About</a></div></section><div class="w"><h2>Explore by level</h2><div class="cats">'+CATS.map(function(k){return'<a class="card" href="#cat-'+k.id+'"><div class="ic">'+k.ic+'</div><h3>'+k.n+'</h3><p>'+k.c.length+(k.c.length>1?' courses':' course')+'</p></a>'}).join("")+'</div></div>'}
-function courses(){return'<div class="w"><h2>Courses</h2><p class="sub">Choose your level.</p>'+CATS.map(function(k){return'<a class="card" href="#cat-'+k.id+'"><h3>'+k.ic+' '+k.n+'</h3><p>'+k.c.length+' course'+(k.c.length>1?'s':'')+'</p></a>'}).join("")+suggestBox()+'</div>'}
+function home(){return'<section class="hero"><div class="w"><span class="pill"><span class="dot"></span> LIVE ON ZOOM</span><h1>Train sharper.<br>Think like a <em>clinician.</em></h1><p>Surgical teaching for medical students, house officers and residents. Small groups or one-to-one.</p><a class="btn" href="#courses">Browse courses</a><a class="btn ghost" href="#about">About</a></div></section><div class="w"><h2>Suggested by level</h2><div class="cats">'+CATS.map(function(k){return'<a class="card" href="#courses-'+k.id+'"><div class="ic">'+k.ic+'</div><h3>'+k.n+'</h3><p>'+k.c.length+(k.c.length>1?' courses':' course')+'</p></a>'}).join("")+'</div></div>'}
+function courses(f){f=f||"all";if(f!=="all"&&!CATS.some(function(k){return k.id===f}))f="all";var chips=[["all","All"]].concat(CATS.map(function(k){return[k.id,k.n]}));
+ var h='<div class="w"><h2>Courses</h2><p class="sub">Every course is open to everyone. The levels are only a guide.</p><div class="chips">'+chips.map(function(c){return'<a class="chip'+(c[0]===f?' on':'')+'" href="#'+(c[0]==="all"?"courses":"courses-"+c[0])+'">'+c[1]+'</a>'}).join("")+'</div>';
+ CATS.forEach(function(k){if(f!=="all"&&f!==k.id)return;k.c.forEach(function(c){h+='<a class="card" href="#course-'+c[0]+'"><h3>'+c[1]+'</h3><p>'+c[2]+'</p>'+status(c[0])+'<span class="tag soon">Suggested for: '+k.n+'</span></a>'})});
+ return h+suggestBox()+'</div>'}
 function cat(id){var k=CATS.filter(function(x){return x.id===id})[0];if(!k)return courses();
- return'<div class="w"><a class="back" href="#courses">← All levels</a><h2>'+k.ic+' '+k.n+'</h2>'+k.c.map(function(c){return'<a class="card" href="#course-'+c[0]+'"><h3>'+c[1]+'</h3><p>'+c[2]+'</p>'+status(c[0])+'</a>'}).join("")+'</div>'}
+ return'<div class="w"><a class="back" href="#courses">← All courses</a><h2>'+k.ic+' '+k.n+'</h2>'+k.c.map(function(c){return'<a class="card" href="#course-'+c[0]+'"><h3>'+c[1]+'</h3><p>'+c[2]+'</p>'+status(c[0])+'</a>'}).join("")+'</div>'}
 function course(id){var f=find(id);if(!f)return courses();var c=f.c,o=OPEN[id];
  var objs=c[3]||(o&&o.obj)||null;
- var b='<div class="w"><a class="back" href="#cat-'+f.cat.id+'">← '+f.cat.n+'</a><h2>'+c[1]+'</h2>'+status(id)+'<p style="margin-top:12px">'+c[2]+'</p>';
+ var b='<div class="w"><a class="back" href="#courses">← All courses</a><h2>'+c[1]+'</h2>'+status(id)+'<span class="tag soon">Suggested for: '+f.cat.n+'</span><p style="margin-top:12px">'+c[2]+'</p>';
  if(objs)b+='<h3>'+(c[3]?'Topics covered':'Objectives')+'</h3><ul class="o">'+objs.map(function(x){return'<li>'+x+'</li>'}).join("")+'</ul>';
  if(o&&o.ses)b+='<h3>The 3 sessions</h3>'+o.ses.map(function(s){return'<div class="card"><h3>'+s[0]+'</h3><p>'+s[1]+'</p></div>'}).join('');b+='<div class="meta"><div>Format<b>Group or Individual</b></div><div>Delivery<b>Live on Zoom</b></div><div>Duration<b>'+(o?o.dur:"Announced when open")+'</b></div><div>Group size<b>'+(o?o.size.replace("Group: ",""):"Announced when open")+'</b></div></div>';
  b+=o?'<a class="btn w100" href="#enrol-'+id+'">Enrol now</a>':'<button class="btn w100" id="int">'+(mine(id)?'\u2713 Interest recorded':'I am interested in this course')+'</button><p class="note" style="margin-top:10px" id="intn">'+(mine(id)?'Thank you! We will announce here when this course opens.':'No payment now. Tap once to show your interest. We open a course once enough students join, and announce it here.')+'</p>';
@@ -125,7 +131,7 @@ function suggestBox(){return'<div class="card"><h3>Suggest a course</h3><p>Missi
 function bindSg(){var b=document.getElementById("sgb");if(!b)return;b.onclick=function(){var i=document.getElementById("sg"),t=i.value.trim(),n=document.getElementById("sgn");if(t.length<3){n.textContent="Please write at least 3 letters.";return}b.disabled=true;n.textContent="Sending...";
  findDB().then(function(h){return fetch(h+"/suggestions.json",{method:"POST",body:JSON.stringify(t)})}).then(function(r){if(!r.ok)throw 0;i.value="";n.textContent="Thank you! We read every suggestion."}).catch(function(){n.textContent="Could not send. Please try again."}).then(function(){b.disabled=false})}}
 function route(){var h=(location.hash||"#home").slice(1),k=h.split("-"),v=k[0],a=k.slice(1).join("-"),html;
- if(v==="courses")html=courses();else if(v==="cat")html=cat(a);else if(v==="course")html=course(a);else if(v==="enrol"){if(window._last!==a){st.step=1;window._last=a}html=enrol(a)}else if(v==="about")html=about();else if(v==="counts"&&a===ADMIN)html=counts();else html=home();
+ if(v==="courses")html=courses(a);else if(v==="cat")html=cat(a);else if(v==="course")html=course(a);else if(v==="enrol"){if(window._last!==a){st.step=1;window._last=a}html=enrol(a)}else if(v==="about")html=about();else if(v==="counts"&&a===ADMIN)html=counts();else html=home();
  app.innerHTML=html;scrollTo(0,0);
  ["home","courses","about"].forEach(function(x){document.getElementById("n-"+x).className=(v===x||(x==="courses"&&/^(cat|course|enrol)$/.test(v)))?"on":""});
  if(v==="course")bindInt(a);if(v==="courses")bindSg();if(v==="counts"&&a===ADMIN)loadCounts();
