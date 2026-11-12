@@ -98,7 +98,7 @@ function course(id){var f=find(id);if(!f)return courses();var c=f.c,o=OPEN[id];
  var b='<div class="w"><a class="back" href="#cat-'+f.cat.id+'">← '+f.cat.n+'</a><h2>'+c[1]+'</h2>'+status(id)+'<p style="margin-top:12px">'+c[2]+'</p>';
  if(objs)b+='<h3>'+(c[3]?'Topics covered':'Objectives')+'</h3><ul class="o">'+objs.map(function(x){return'<li>'+x+'</li>'}).join("")+'</ul>';
  if(o&&o.ses)b+='<h3>The 3 sessions</h3>'+o.ses.map(function(s){return'<div class="card"><h3>'+s[0]+'</h3><p>'+s[1]+'</p></div>'}).join('');b+='<div class="meta"><div>Format<b>Group or Individual</b></div><div>Delivery<b>Live on Zoom</b></div><div>Duration<b>'+(o?o.dur:"Announced when open")+'</b></div><div>Group size<b>'+(o?o.size.replace("Group: ",""):"Announced when open")+'</b></div></div>';
- b+=o?'<a class="btn w100" href="#enrol-'+id+'">Enrol now</a>':'<button class="btn w100" id="int">I am interested in this course</button><div id="tf" style="display:none"><iframe src="https://tally.so/embed/je6xp1?hideTitle=1&transparentBackground=1" width="100%" height="560" frameborder="0" title="Course interest"></iframe></div><p class="note" style="margin-top:10px">No payment now. Tick the courses you want and send. We open a course once enough students join, and announce it here. <a href="https://tally.so/r/je6xp1" target="_blank" style="color:var(--ac)">Form not showing? Open it here.</a></p>';
+ b+=o?'<a class="btn w100" href="#enrol-'+id+'">Enrol now</a>':'<button class="btn w100" id="int">'+(mine(id)?'\u2713 Interest recorded':'I am interested in this course')+'</button><p class="note" style="margin-top:10px" id="intn">'+(mine(id)?'Thank you! We will announce here when this course opens.':'No payment now. Tap once to show your interest. We open a course once enough students join, and announce it here.')+'</p>';
  return b+'</div>'}
 var st={fmt:"Group course",step:1,n:"",p:"",e:""};
 function enrol(id){var f=find(id);if(!f||!OPEN[id])return courses();var c=f.c,o=OPEN[id];
@@ -109,12 +109,22 @@ function enrol(id){var f=find(id);if(!f||!OPEN[id])return courses();var c=f.c,o=
  else{b+='<div class="card"><h3>Payment instructions</h3><p>Amount: <b>'+pr+'</b> · '+st.fmt+'</p><p>'+BANK+'</p><p class="note">Transfer the amount, then send a screenshot of your receipt on WhatsApp. Your registration is confirmed after approval and you receive your Zoom link.</p><a class="btn w100" target="_blank" href="'+wa("Acuity Academy enrolment\nName: "+st.n+"\nPhone: "+st.p+"\nEmail: "+st.e+"\nCourse: "+c[1]+"\nFormat: "+st.fmt+"\nI have made the payment. Receipt attached.")+'">Send payment proof on WhatsApp</a></div>'}
  return b+'</div>'}
 function about(){return'<div class="w"><h2>About Acuity Academy</h2><p>Acuity Academy offers live, interactive surgical teaching on Zoom for medical students, house officers and surgical residents. Teaching is delivered live and adapts to each group. We also offer a short introduction to the OET.</p><div class="card"><h3>Two ways to learn</h3><p>👥 Group course: small live cohorts.<br>🎯 Individual tutoring: one-to-one, at your pace.</p></div><a class="btn w100" target="_blank" href="'+wa("Hello, I have a question about Acuity Academy")+'">Contact on WhatsApp</a></div>'}
-function bindInt(){var b=document.getElementById("int");if(!b)return;b.onclick=function(){document.getElementById("tf").style.display="block";b.style.display="none"}}
+var DB="https://acuity-interest-default-rtdb.firebaseio.com",ADMIN="ac9x4";
+function ikey(id){return"acuity-fb-"+id}
+function mine(id){try{return localStorage.getItem(ikey(id))==="1"}catch(e){return false}}
+function setMine(id){try{localStorage.setItem(ikey(id),"1")}catch(e){}}
+function clearMine(id){try{localStorage.removeItem(ikey(id))}catch(e){}}
+function bindInt(id){var b=document.getElementById("int");if(!b)return;if(mine(id)){b.disabled=true;return}
+ b.onclick=function(){if(mine(id))return;b.disabled=true;setMine(id);var n=document.getElementById("intn");n.textContent="Recording...";
+  fetch(DB+"/interest/"+id+".json",{method:"PUT",body:JSON.stringify({".sv":{"increment":1}})}).then(function(r){if(!r.ok)throw 0;b.textContent="\u2713 Interest recorded";n.textContent="Thank you! We will announce here when this course opens."}).catch(function(){clearMine(id);b.disabled=false;n.textContent="Could not record. Check your connection and tap again."})}}
+function counts(){var h='<div class="w"><h2>Interest counts</h2><p class="sub">Reload this page to refresh.</p>';
+ CATS.forEach(function(k){k.c.forEach(function(c){h+='<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 style="margin:0">'+c[1]+'</h3><b id="ct-'+c[0]+'" style="font:800 28px Fraunces,serif;color:var(--ac)">…</b></div>'})});return h+'</div>'}
+function loadCounts(){fetch(DB+"/interest.json").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){d=d||{};CATS.forEach(function(k){k.c.forEach(function(c){document.getElementById("ct-"+c[0]).textContent=d[c[0]]||0})})}).catch(function(){CATS.forEach(function(k){k.c.forEach(function(c){document.getElementById("ct-"+c[0]).textContent="?"})})})}
 function route(){var h=(location.hash||"#home").slice(1),k=h.split("-"),v=k[0],a=k.slice(1).join("-"),html;
- if(v==="courses")html=courses();else if(v==="cat")html=cat(a);else if(v==="course")html=course(a);else if(v==="enrol"){if(window._last!==a){st.step=1;window._last=a}html=enrol(a)}else if(v==="about")html=about();else html=home();
+ if(v==="courses")html=courses();else if(v==="cat")html=cat(a);else if(v==="course")html=course(a);else if(v==="enrol"){if(window._last!==a){st.step=1;window._last=a}html=enrol(a)}else if(v==="about")html=about();else if(v==="counts"&&a===ADMIN)html=counts();else html=home();
  app.innerHTML=html;scrollTo(0,0);
  ["home","courses","about"].forEach(function(x){document.getElementById("n-"+x).className=(v===x||(x==="courses"&&/^(cat|course|enrol)$/.test(v)))?"on":""});
- if(v==="course")bindInt();
+ if(v==="course")bindInt(a);if(v==="counts"&&a===ADMIN)loadCounts();
  if(v==="enrol"){var f=document.getElementById("f"),c1=document.getElementById("c1"),c2=document.getElementById("c2");
   if(f)f.onchange=function(){st.fmt=f.value;route()};
   if(c1)c1.onclick=function(){st.step=2;route()};
